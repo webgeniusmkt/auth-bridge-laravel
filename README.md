@@ -135,6 +135,65 @@ AUTH_BRIDGE_APP_HEADER=X-App-Key
 # AUTH_BRIDGE_LAST_SEEN_COLUMN=last_seen_at
 ```
 
+## Onboarding a New Laravel App (Authorization Code flow)
+
+Use this checklist whenever you clone the base app template and want it to authenticate through the Auth API:
+
+1. **Create an OAuth client in auth-api**  
+   ```bash
+   ./vendor/bin/sail artisan passport:client --name="My Web App (Auth Code)"
+   ```  
+   Supply the production + local callback URL (for example `https://myapp.example.com/oauth/callback`). Keep the `client_id` and `client_secret`.
+
+2. **Link the client to the application row**  
+   Update `applications` (or use the API/Seeder) so `key = "myapp"` and `oauth_client_id = <client_id from step 1>`. Enable the app for each account that should access it via:  
+   `POST /api/v1/accounts/{account_uuid}/apps/{app_uuid}`.
+
+3. **Install the bridge in the Laravel app**  
+   Run `composer require webgeniusmkt/auth-bridge-laravel`, publish config + migrations, and run `php artisan migrate` (as described earlier in this README).
+
+4. **Configure the guard**  
+   Set `auth.guards.api.driver = auth-bridge` and point it at the `users` provider. Optionally tweak cache TTL/store per environment.
+
+5. **Provide OAuth + bridge environment variables**  
+   ```
+   AUTH_BRIDGE_BASE_URL=https://auth.example.com/api/v1
+   AUTH_BRIDGE_ACCOUNT_HEADER=X-Account-ID
+   AUTH_BRIDGE_APP_HEADER=X-App-Key
+   AUTH_BRIDGE_INPUT_KEY=api_token
+   AUTH_BRIDGE_STORAGE_KEY=api_token
+
+   OAUTH_CLIENT_ID=<client_id from auth-api>
+   OAUTH_CLIENT_SECRET=<client_secret from auth-api>
+   APP_KEY_SLUG=myapp              # must match applications.key in auth-api
+   APP_URL=https://myapp.example.com
+   ```
+
+6. **Implement the Authorization Code flow in your app**  
+   - `/login` route: generate a random `state`, store it in the session, and redirect the browser to `${AUTH_BRIDGE_BASE_URL}/oauth/authorize` with the standard parameters (`client_id`, `redirect_uri`, `response_type=code`, `scope`, `state`).  
+   - `/oauth/callback`: validate the `state`, exchange the `code` for tokens at `${AUTH_BRIDGE_BASE_URL}/oauth/token` (`grant_type=authorization_code`). Store the `access_token` (and optional `refresh_token`) in the session and drop the access token into a cookie or request input named `api_token` so the bridge guard can read it (`AUTH_BRIDGE_INPUT_KEY`/`STORAGE_KEY`).  
+   - `/logout`: optionally call `${AUTH_BRIDGE_BASE_URL}/logout` with the stored access token, then clear the session and `api_token` cookie.
+
+7. **Forward account/app headers automatically**  
+   Create a lightweight middleware that copies the current account and app key into request headers before `auth:api` runs:  
+   - Read the active account UUID from session/query (`session('x_account_id')`, for example).  
+   - Set `X-Account-ID`/`X-App-Key` (or the overridden header names) on the request so the bridge forwards them to the Auth API `/user` call.  
+   Apply this middleware before `auth:api` in your protected route groups.
+
+8. **Protect routes with the bridge guard**  
+   ```php
+   Route::middleware(['inject-auth-ctx', 'auth:api'])->group(function () {
+       Route::get('/', fn () => view('welcome'));
+       Route::get('/me', fn () => request()->user());
+   });
+   ```
+
+9. **(Optional) Refresh tokens**  
+   When `now() > session('token_expires_at')->subSeconds(60)`, call `/oauth/token` with `grant_type=refresh_token`, update the stored tokens, and reissue the `api_token` cookie. This keeps long-lived browser sessions seamless.
+
+10. **Server-to-server API keys**  
+    Only use Auth API "Account API Keys" when your app itself (or a backend worker) needs to call Auth API endpoints without a user session. They are created with `POST /api/v1/accounts/{account}/api-keys` and sent as `X-API-Key`. They are not required for the standard user login flow.
+
 ## Why a Local `users` Table?
 
 Each downstream app still needs a `users` table because:
