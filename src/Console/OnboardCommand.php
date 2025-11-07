@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+namespace AuthBridge\Laravel\Console;
+
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class OnboardCommand extends Command
+{
+    protected $signature = 'auth-bridge:onboard
+        {--app-key= : applications.key in Auth API}
+        {--app-name= : Display name for the app}
+        {--redirect= : Redirect URI (defaults to APP_URL + /oauth/callback)}
+        {--accounts=* : Account IDs to enable}
+        {--auth-base= : Override AUTH_BRIDGE_BASE_URL}
+        {--bootstrap-token= : Admin bearer token for the Auth API internal bootstrap}
+        {--client-id= : Use an existing OAuth client id}
+        {--client-secret= : Use an existing OAuth client secret}
+        {--dry : Show what would happen without changing anything}
+    ';
+
+    protected $description = 'Bootstrap the app in Auth API and scaffold the current Laravel app to use the Auth Bridge';
+
+    public function handle(): int
+    {
+        $appName = (string) ($this->option('app-name') ?: config('app.name', 'My App'));
+        $appKey = (string) ($this->option('app-key') ?: Str::slug($appName));
+        $authBase = rtrim((string) ($this->option('auth-base') ?: config('auth-bridge.base_url')), '/');
+        $redirectSuffix = (string) config('auth-bridge.default_redirect_suffix', '/oauth/callback');
+        $redirect = (string) ($this->option('redirect') ?: (rtrim((string) config('app.url'), '/') . $redirectSuffix));
+
+        if ($authBase === '') {
+            $this->error('Auth base URL is required. Provide --auth-base or set AUTH_BRIDGE_BASE_URL.');
+            return self::FAILURE;
+        }
+
+        $clientId = $this->option('client-id');
+        $clientSecret = $this->option('client-secret');
+
+        $this->line("App Key: <info>{$appKey}</info>");
+        $this->line("App Name: <info>{$appName}</info>");
+        $this->line("Auth Base: <info>{$authBase}</info>");
+        $this->line("Redirect: <info>{$redirect}</info>");
+
+        if ($this->option('dry')) {
+            $this->comment('DRY-RUN: skipping mutations.');
+            return self::SUCCESS;
+        }
+
+        $this->ensureBridgeInstalled();
+
+        if ((! $clientId || ! $clientSecret) && ($token = $this->option('bootstrap-token'))) {
+            $client = $this->bootstrapApp(
+                authBase: $authBase,
+                token: $token,
+                appKey: $appKey,
+                appName: $appName,
+                redirect: $redirect,
+                accounts: (array) $this->option('accounts'),
+            );
+
+            if (! $client) {
+                return self::FAILURE;
+            }
+
+            $clientId = $client['client_id'] ?? $clientId;
+            $clientSecret = $client['client_secret'] ?? $clientSecret;
+        }
+
+        if (! $clientId || ! $clientSecret) {
+            $this->warn('No client id/secret available. Re-run with --client-id/--client-secret or --bootstrap-token.');
+        }
+
+        $this->updateEnv(array_filter([
+            'AUTH_BRIDGE_BASE_URL' => $authBase,
+            'AUTH_BRIDGE_USER_ENDPOINT' => config('auth-bridge.user_endpoint', '/user'),
+            'AUTH_BRIDGE_ACCOUNT_HEADER' => config('auth-bridge.headers.account', 'X-Account-ID'),
+            'AUTH_BRIDGE_APP_HEADER' => config('auth-bridge.headers.app', 'X-App-Key'),
+            'AUTH_BRIDGE_INPUT_KEY' => config('auth-bridge.guard.input_key', 'api_token'),
+            'AUTH_BRIDGE_STORAGE_KEY' => config('auth-bridge.guard.storage_key', 'api_token'),
+            'APP_KEY_SLUG' => $appKey,
+            'OAUTH_CLIENT_ID' => $clientId ?: null,
+            'OAUTH_CLIENT_SECRET' => $clientSecret ?: null,
+        ], fn ($value) => ! is_null($value)));
+
+        if ($this->call(ScaffoldCommand::class) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
+
+        if ($this->call(CheckCommand::class) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
+
+        $this->info('✅ Onboarding completed.');
+
+        return self::SUCCESS;
+    }
+
+    private function ensureBridgeInstalled(): void
+    {
+        $this->callSilent('vendor:publish', ['--tag' => 'auth-bridge-config', '--force' => true]);
+        $this->callSilent('vendor:publish', ['--tag' => 'auth-bridge-migrations', '--force' => true]);
+        $this->call('migrate');
+    }
+
+    private function bootstrapApp(string $authBase, string $token, string $appKey, string $appName, string $redirect, array $accounts = []): ?array
+    {
+        $path = (string) config('auth-bridge.internal_bootstrap_path', '/internal/apps/bootstrap');
+        $url = $authBase . $path;
+        $this->info("Bootstrapping app in Auth API… {$url}");
+
+        $response = Http::withToken($token)->post($url, [
+            'app_key' => $appKey,
+            'app_name' => $appName,
+            'redirect_uri' => $redirect,
+            'account_ids' => array_values($accounts),
+        ]);
+
+        if ($response->failed()) {
+            $this->error('Auth API bootstrap failed: ' . $response->body());
+            return null;
+        }
+
+        return (array) $response->json();
+    }
+
+    private function updateEnv(array $keyValue): void
+    {
+        $path = base_path('.env');
+        $env = file_exists($path) ? file_get_contents($path) : '';
+
+        foreach ($keyValue as $key => $value) {
+            $pattern = "/^" . preg_quote($key, '/') . "=.*$/m";
+            $line = $key . '=' . $value;
+            $env = preg_match($pattern, $env)
+                ? (string) preg_replace($pattern, $line, $env)
+                : rtrim($env) . PHP_EOL . $line . PHP_EOL;
+        }
+
+        file_put_contents($path, ltrim($env));
+    }
+}

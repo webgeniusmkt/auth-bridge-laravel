@@ -27,6 +27,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Onboarding Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Values consumed by the onboarding Artisan commands when scaffolding a
+    | Laravel application to use the Auth Bridge.
+    |
+    */
+
+    'internal_bootstrap_path' => env('AUTH_BRIDGE_BOOTSTRAP_PATH', '/internal/apps/bootstrap'),
+    'default_redirect_suffix' => env('AUTH_BRIDGE_DEFAULT_REDIRECT_SUFFIX', '/oauth/callback'),
+
+    /*
+    |--------------------------------------------------------------------------
     | HTTP Client Options
     |--------------------------------------------------------------------------
     |

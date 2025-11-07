@@ -10,6 +10,11 @@ use AuthBridge\Laravel\Http\Middleware\EnsureAuthBridgePermission;
 use AuthBridge\Laravel\Http\Middleware\EnsureAuthBridgeRole;
 use AuthBridge\Laravel\Support\AuthBridgeContext;
 use AuthBridge\Laravel\Support\UserSynchronizer;
+use AuthBridge\Laravel\Console\BootstrapAppCommand;
+use AuthBridge\Laravel\Console\CheckCommand;
+use AuthBridge\Laravel\Console\InstallCommand;
+use AuthBridge\Laravel\Console\OnboardCommand;
+use AuthBridge\Laravel\Console\ScaffoldCommand;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -42,6 +47,16 @@ class AuthBridgeServiceProvider extends ServiceProvider
         $this->app->singleton(AuthBridgeContext::class, function (Container $app): AuthBridgeContext {
             return new AuthBridgeContext($app['request']);
         });
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                OnboardCommand::class,
+                BootstrapAppCommand::class,
+                ScaffoldCommand::class,
+                InstallCommand::class,
+                CheckCommand::class,
+            ]);
+        }
     }
 
     public function boot(): void
