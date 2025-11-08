@@ -109,7 +109,7 @@ class OnboardCommand extends Command
     private function bootstrapApp(string $authBase, string $token, string $appKey, string $appName, string $redirect, array $accounts = []): ?array
     {
         $path = (string) config('auth-bridge.internal_bootstrap_path', '/internal/apps/bootstrap');
-        $url = $authBase . $path;
+        $url = rtrim($authBase, '/') . '/' . ltrim($path, '/');
         $this->info("Bootstrapping app in Auth API… {$url}");
 
         $response = Http::withToken($token)->post($url, [
