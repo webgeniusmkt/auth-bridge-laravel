@@ -2,9 +2,11 @@
   import AppLayout from '../Layouts/AppLayout.svelte';
   import Button from '../components/ui/button.svelte';
   import Alert from '../components/ui/alert.svelte';
-  import { router } from '@inertiajs/svelte';
+import { router } from '@inertiajs/svelte';
 
-  const goToLogin = () => router.visit('/login');
+const goToLogin = () => {
+  window.location.href = '/login';
+};
 </script>
 
 <AppLayout title="Welcome">
