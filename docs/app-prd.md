@@ -1,122 +1,120 @@
-# 🧾 Product Requirements Document (PRD) Template
+# Product Requirements Document (PRD): Auth Bridge Laravel
 
-> Replace the placeholders (`{{LIKE_THIS}}`) with the details for your application. Example text shown in *italics* is optional guidance—remove it once the real information is known. Check https://github.com/webgeniusmkt/auth-api/blob/main/docs/app-prd.md out to get some inspiration.
+## 1. Project Overview
 
----
+**Project Name:** Auth Bridge Laravel  
+**Type:** Laravel Package / Integration Layer  
+**Primary Stakeholders:**  
+- Platform engineers (maintainers of auth-api and downstream apps)
+- App developers (using laravel-app-template)
+- AI developer agents (see [AI Collaboration Playbook](../ai/AGENTS.md))
 
-## 1. Product Requirements Document (PRD)
-- **Project Name:** `{{PROJECT_NAME}}` *Example: Atlas Dashboard*
-- **Type:** `{{PROJECT_TYPE}}` *Example: B2B SaaS analytics portal*
-- **Primary Stakeholders:** `{{STAKEHOLDERS}}`
-- **Summary:** `{{ONE_PARAGRAPH_SUMMARY}}`
+**Summary:**  
+Auth Bridge Laravel is a reusable Laravel package that connects any Laravel + Inertia + Svelte app to a central authorization API (**auth-api**). It handles all authentication, registration, 2FA, and user context, so new apps can be launched instantly without custom auth logic. The package syncs a minimal local user record, delegates all token/role/permission logic to the central API, and ships with a ready-made UI (login, registration, etc.) scaffolded into the app.
 
 ---
 
 ## 2. Goals & Success Metrics
-- **Business Goals:** `{{BUSINESS_GOALS}}` *Example: Reduce onboarding time by 30%*
-- **User Goals:** `{{USER_GOALS}}`
-- **Success Metrics / KPIs:** `{{KPIS}}`
+
+**Business Goals:**
+- Enable rapid launch of new Laravel + Inertia + Svelte apps with zero custom authentication code.
+- Centralize user management, roles, and permissions for all apps in the ecosystem.
+- Reduce onboarding time for new projects to under 10 minutes.
+
+**User Goals:**
+- Developers can create a new app from the template and have working auth (login, registration, 2FA, etc.) out of the box.
+- End users experience seamless SSO and consistent UX across all apps.
+
+**Success Metrics / KPIs:**
+- Time to first authenticated request in a new app < 10 minutes.
+- Number of apps using the bridge package.
+- Zero duplicated auth logic in downstream apps.
 
 ---
 
 ## 3. Scope & Non-Scope
-- **In Scope:** `{{WHAT_IS_INCLUDED}}`
-- **Out of Scope:** `{{WHAT_IS_EXCLUDED}}`
+
+**In Scope:**
+- Laravel package (`auth-bridge-laravel`) that:
+    - Connects to a central auth-api (OAuth2/Passport-based).
+    - Publishes migrations to sync local users table.
+    - Scaffolds Inertia + Svelte UI for login, registration, 2FA, etc.
+    - Handles token validation, user hydration, and role/permission checks via the API.
+    - Provides install scripts and onboarding commands.
+- Integration with [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template) for rapid app creation.
+- Documentation for AI agents and human developers (see [AI Collaboration Playbook](../ai/AGENTS.md)).
+
+**Out of Scope:**
+- The central auth-api itself (see [auth-api repo](https://github.com/webgeniusmkt/auth-api)).
+- Custom business logic for downstream apps.
+- UI customization beyond the scaffolded defaults (apps can override after install).
 
 ---
 
-## 4. Core Architecture
+## 4. Core Architecture Layer
 
-| Layer | Choice / Notes |
-|-------|----------------|
-| Framework | `{{FRAMEWORK}}` *Default: Laravel 12* |
-| Language | `{{LANGUAGE}}` *Default: PHP 8.4* |
-| Auth Strategy | `{{AUTH_STRATEGY}}` *Default: Auth Bridge + Passport* |
-| Database | `{{DATABASE}}` *Example: MySQL 8 + Redis cache* |
-| Queue / Jobs | `{{QUEUE}}` |
-| Frontend | `{{FRONTEND}}` *Example: Vite + Vue* |
-| Observability | `{{LOGGING_METRICS}}` |
-| Deployment | `{{DEPLOYMENT_PIPELINE}}` |
+| Framework      | Language | Strategy                    | Database      | Queue / Jobs | Frontend         | Observability      | Deployment           |
+|----------------|----------|-----------------------------|---------------|--------------|------------------|--------------------|----------------------|
+| Laravel 12.x   | PHP 8.4+ | Auth Bridge + Passport API  | MySQL (local) | Optional     | Inertia + Svelte | Laravel logs, Sentry| Composer/NPM, Docker |
 
-Add, remove, or expand rows as needed for the project.
+**Key Components:**
+- **auth-api**: Central OAuth2/Passport server, user/role management.
+- **auth-bridge-laravel**: Bridge package, installed in every app.
+- **laravel-app-template**: GitHub template repo, includes install scripts and bridge package.
+- **Inertia + Svelte UI**: Provided by the bridge, customizable per app.
 
 ---
 
 ## 5. Functional Requirements
-Break down the feature areas relevant to this app. Use the tables below as a starting point.
 
-### 5.1 `{{FEATURE_AREA_NAME}}`
-| ID | User Story | Acceptance Criteria |
-|----|------------|--------------------|
-| `FR-{{001}}` | `{{As a <role>, I want ...}}` | `{{Given/When/Then ...}}` |
-| | | |
+- **Install/Onboard Flow:**
+    - `install.sh` script in template runs:
+        - Laravel install
+        - Inertia + Svelte install
+        - `composer require webgeniusmkt/auth-bridge-laravel`
+        - `php artisan auth-bridge:onboard ...` (registers app, sets up .env, publishes UI)
+    - See [docs/setup/auth-bridge.md](./setup/auth-bridge.md) for details.
 
-### 5.2 `{{ADDITIONAL_FEATURE_AREA}}`
-| ID | User Story | Acceptance Criteria |
-|----|------------|--------------------|
-| | | |
+- **User Authentication:**
+    - All login, registration, 2FA, and password reset flows handled via bridge package.
+    - UI scaffolded into `resources/js/Pages/Auth/` and `resources/js/components/ui/`.
+    - Local user table kept in sync for Eloquent relationships.
 
-Repeat as many sections as necessary. Consider referencing shared requirements such as [Pagination, Sorting & Filtering](requirements/pagination-in-controllers.md) when applicable.
+- **Token & Role Management:**
+    - All token validation, refresh, and role/permission checks delegated to central API.
+    - Local app never stores or manages passwords/tokens directly.
 
----
-
-## 6. API & Integration Notes
-- **Authentication Guard:** `{{AUTH_GUARD}}` *Example: auth-bridge guard (see docs/setup/auth-bridge.md)*
-- **External Services:** `{{SERVICE_DEPENDENCIES}}` *Example: Billing API, Notifications service*
-- **Key Endpoints:** `{{ENDPOINT_LIST}}` *Provide route, method, purpose*
-- **Headers / Context Requirements:** `{{HEADER_NOTES}}` *Example: X-Account-ID, X-App-Key*
-
-If the app introduces new APIs, document example requests/responses here.
+- **AI Agent Awareness:**
+    - All conventions, scripts, and integration points are documented in [ai/AGENTS.md](../ai/AGENTS.md).
+    - AI agents should reference this PRD and related docs for context.
 
 ---
 
-## 7. Data Model Overview
+## 6. Integration & Usage
 
-| Entity | Key Fields | Notes |
-|--------|------------|-------|
-| `{{Entity}}` | `{{fields}}` | `{{relationships / statuses}}` |
-| | | |
+**For a new app:**
+1. Create from [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template).
+2. Run `install.sh` (or manual steps as in [docs/setup/auth-bridge.md](./setup/auth-bridge.md)).
+3. App is ready with full auth, user context, and UI.
+4. Customize UI as needed after initial scaffold.
 
-Include ERD links or diagrams if available.
-
----
-
-## 8. Non-Functional Requirements
-- **Performance / SLAs:** `{{PERFORMANCE}}`
-- **Security / Compliance:** `{{SECURITY}}`
-- **Reliability / Uptime:** `{{RELIABILITY}}`
-- **Scalability Considerations:** `{{SCALABILITY}}`
-- **Accessibility:** `{{ACCESSIBILITY}}`
-- **Localization:** `{{LOCALE_REQUIREMENTS}}`
+**For the central API:**  
+See [auth-api/README.md](https://github.com/webgeniusmkt/auth-api/blob/main/README.md) and [docs/setup/testing-apps.md](https://github.com/webgeniusmkt/auth-api/blob/main/docs/setup/testing-apps.md) for details on registering new apps and managing OAuth clients.
 
 ---
 
-## 9. Testing & Quality Strategy
-- **Test Types:** `{{TEST_TYPES}}` *Example: Pest feature tests, contract tests*
-- **Coverage Targets:** `{{COVERAGE_TARGETS}}`
-- **Tooling:** `{{TEST_TOOLING}}`
-- **Manual QA Checklist:** `{{MANUAL_QA}}`
+## 7. References
+
+- [AI Collaboration Playbook](../ai/AGENTS.md)
+- [Auth Bridge Integration Guide](./setup/auth-bridge.md)
+- [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template)
+- [auth-api](https://github.com/webgeniusmkt/auth-api)
+- [Testing Apps Setup](./setup/testing-apps.md)
 
 ---
 
-## 10. Milestones & Timeline
-| Milestone | Description | Owner | Target Date |
-|-----------|-------------|-------|-------------|
-| `{{M1}}` | `{{Description}}` | `{{Owner}}` | `{{Date}}` |
-| | | | |
+## 8. Change Log
+
+- **2025-11-09:** Major update to reflect real-world architecture and onboarding flow.
 
 ---
-
-## 11. Open Questions & Risks
-- **Open Questions:** `{{OPEN_QUESTIONS}}`
-- **Risks / Mitigations:** `{{RISKS_AND_MITIGATIONS}}`
-
----
-
-## 12. Appendices
-- Link supporting documents, diagrams, or decision records: `{{LINKS}}`
-- Reference any workflow notes stored in `/ai/workflows/`
-
----
-
-> ✅ Once the project details are finalized, remove unused sections/placeholders so the PRD reflects the actual application scope.
