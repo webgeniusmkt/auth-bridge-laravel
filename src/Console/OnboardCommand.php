@@ -155,6 +155,7 @@ class OnboardCommand extends Command
     private function updateEnv(array $keyValue): void
     {
         $path = base_path('.env');
+        Log::info('updateEnv: Attempting to write to .env file at: ' . $path);
         $env = file_exists($path) ? file_get_contents($path) : '';
 
         foreach ($keyValue as $key => $value) {
@@ -165,6 +166,11 @@ class OnboardCommand extends Command
                 : rtrim($env) . PHP_EOL . $line . PHP_EOL;
         }
 
-        file_put_contents($path, ltrim($env));
+        try {
+            file_put_contents($path, ltrim($env));
+            Log::info('updateEnv: Successfully wrote to .env file.');
+        } catch (\Throwable $e) {
+            Log::error('updateEnv: Failed to write to .env file: ' . $e->getMessage());
+        }
     }
 }
