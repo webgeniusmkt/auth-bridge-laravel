@@ -26,6 +26,7 @@ use Illuminate\Foundation\Providers\ArtisanServiceProvider;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class AuthBridgeServiceProvider extends ServiceProvider
@@ -43,6 +44,7 @@ class AuthBridgeServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        Log::info('AuthBridgeServiceProvider: register() method called.');
         $this->mergeConfigFrom(__DIR__ . '/../config/auth-bridge.php', 'auth-bridge');
 
         $this->app->singleton(AuthBridgeClient::class, function (Container $app): AuthBridgeClient {
@@ -64,9 +66,8 @@ class AuthBridgeServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands(self::COMMANDS);
-        }
+        Log::info('AuthBridgeServiceProvider: boot() method called.');
+        $this->commands(self::COMMANDS);
 
         $this->registerPublishing();
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
