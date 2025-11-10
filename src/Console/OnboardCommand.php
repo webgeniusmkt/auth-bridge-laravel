@@ -167,14 +167,45 @@ class OnboardCommand extends Command
 
     private function fetchAppIdFromAuthApi(string $authBase, string $clientId, string $clientSecret, string $appKey): ?string
     {
+        // Step 1: Get an access token using client credentials
+        $tokenUrl = rtrim($authBase, '/') . '/../..' . '/oauth/token'; // Navigate from /api/v1 to root
+        $this->info("Fetching access token from Auth API… {$tokenUrl}");
+        Log::debug('Auth API Token URL: ' . $tokenUrl);
+
+        try {
+            $tokenResponse = Http::asForm()->post($tokenUrl, [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+            ]);
+
+            if ($tokenResponse->failed()) {
+                $this->error('Auth API token request failed: ' . $tokenResponse->body());
+                Log::error('Auth API token request failed', ['body' => $tokenResponse->json()]);
+                return null;
+            }
+
+            $accessToken = $tokenResponse->json('access_token');
+            if (! $accessToken) {
+                $this->error('Auth API did not return an access token.');
+                return null;
+            }
+
+        } catch (\Throwable $e) {
+            $this->error('Auth API token request threw an exception: ' . $e->getMessage());
+            Log::error('Auth API token request exception', ['exception' => $e]);
+            return null;
+        }
+
+
+        // Step 2: Use the access token to fetch the App ID
         $path = (string) config('auth-bridge.app_lookup_path', '/apps');
         $url = rtrim($authBase, '/') . '/' . ltrim($path, '/');
         $this->info("Fetching App ID from Auth API… {$url}");
-
         Log::debug('Auth API App ID Lookup URL: ' . $url);
 
         try {
-            $response = Http::withBasicAuth($clientId, $clientSecret)->get($url, [
+            $response = Http::withToken($accessToken)->get($url, [
                 'app_key' => $appKey,
             ]);
 
@@ -186,7 +217,6 @@ class OnboardCommand extends Command
                 return null;
             }
 
-            // The response is an array of apps, get the first one
             $apps = $response->json();
             if (empty($apps) || !isset($apps[0]['id'])) {
                 $this->error('Auth API returned no matching app for the given app_key.');
