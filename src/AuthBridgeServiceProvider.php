@@ -60,8 +60,6 @@ class AuthBridgeServiceProvider extends ServiceProvider
         $this->app->singleton(AuthBridgeContext::class, function (Container $app): AuthBridgeContext {
             return new AuthBridgeContext($app['request']);
         });
-
-        $this->registerCommands();
     }
 
     public function boot(): void
@@ -70,6 +68,10 @@ class AuthBridgeServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->registerGuard();
         $this->registerMiddleware();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands(self::COMMANDS);
+        }
     }
 
     protected function registerPublishing(): void
@@ -155,26 +157,4 @@ class AuthBridgeServiceProvider extends ServiceProvider
         $router->aliasMiddleware('auth-bridge.role', EnsureAuthBridgeRole::class);
     }
 
-    private function registerCommands(): void
-    {
-        if (! $this->app->runningInConsole()) {
-            $this->app->register(ArtisanServiceProvider::class);
-        }
-
-        foreach (self::COMMANDS as $command) {
-            $this->app->singleton($command);
-        }
-
-        if ($this->app->runningInConsole()) {
-            $this->commands(self::COMMANDS);
-
-            return;
-        }
-
-        $this->app->afterResolving(ConsoleKernel::class, function (ConsoleKernel $kernel) {
-            foreach (self::COMMANDS as $command) {
-                $kernel->registerCommand($this->app->make($command));
-            }
-        });
-    }
 }
