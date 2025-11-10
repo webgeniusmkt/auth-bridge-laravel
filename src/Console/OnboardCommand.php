@@ -22,6 +22,7 @@ class OnboardCommand extends Command
         {--bootstrap-token= : Admin bearer token for the Auth API internal bootstrap}
         {--client-id= : Use an existing OAuth client id}
         {--client-secret= : Use an existing OAuth client secret}
+        {--app-id= : The application ID from the Auth API}
         {--dry : Show what would happen without changing anything}
     ';
 
@@ -44,7 +45,7 @@ class OnboardCommand extends Command
 
         $clientId = $this->option('client-id');
         $clientSecret = $this->option('client-secret');
-        $appId = null;
+        $appId = $this->option('app-id');
 
         $this->line("App Key: <info>{$appKey}</info>");
         $this->line("App Name: <info>{$appName}</info>");
@@ -74,7 +75,7 @@ class OnboardCommand extends Command
 
             $clientId = $client['client_id'] ?? $clientId;
             $clientSecret = $client['client_secret'] ?? $clientSecret;
-            $appId = $client['id'] ?? null;
+            $appId = $client['id'] ?? $appId;
         }
 
         if (! $clientId || ! $clientSecret) {
