@@ -58,7 +58,7 @@ class OnboardCommand extends Command
 
         $this->ensureBridgeInstalled();
 
-        if ((! $clientId || ! $clientSecret) && ($token = $this->option('bootstrap-token'))) {
+        if ($token = $this->option('bootstrap-token')) {
             $client = $this->bootstrapApp(
                 authBase: $authBase,
                 token: $token,
@@ -122,6 +122,7 @@ class OnboardCommand extends Command
         $this->info("Bootstrapping app in Auth API… {$url}");
 
         dump('Auth API URL: ' . $url);
+        Log::debug('Auth API URL: ' . $url);
 
         try {
             $response = Http::withToken($token)->post($url, [
@@ -132,6 +133,7 @@ class OnboardCommand extends Command
             ]);
 
             dump('Auth API Bootstrap Response: ' . $response->body());
+            Log::debug('Auth API Bootstrap Response: ' . $response->body());
 
             if ($response->failed()) {
                 $this->error('Auth API bootstrap failed: ' . $response->body());
@@ -139,6 +141,7 @@ class OnboardCommand extends Command
             }
         } catch (\Throwable $e) {
             dump('Auth API bootstrap request failed: ' . $e->getMessage());
+            Log::debug('Auth API bootstrap request failed: ' . $e->getMessage());
             $this->error('Auth API bootstrap request failed: ' . $e->getMessage());
             return null;
         }
