@@ -32,7 +32,11 @@ class OnboardCommand extends Command
         Log::info('OnboardCommand started.');
         $appName = (string) ($this->option('app-name') ?: config('app.name', 'My App'));
         $appKey = (string) ($this->option('app-key') ?: Str::slug($appName));
-        $authBase = rtrim((string) ($this->option('auth-base') ?: config('auth-bridge.base_url')), '/');
+        $authBase = config('auth-bridge.base_url');
+        if (empty($authBase)) {
+            $authBase = $this->option('auth-base');
+        }
+        $authBase = rtrim((string) $authBase, '/');
         $redirectSuffix = (string) config('auth-bridge.default_redirect_suffix', '/oauth/callback');
         $redirect = (string) ($this->option('redirect') ?: (rtrim((string) config('app.url'), '/') . $redirectSuffix));
 
