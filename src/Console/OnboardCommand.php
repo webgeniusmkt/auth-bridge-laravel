@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
 use Illuminate\Foundation\Console\VendorPublishCommand;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class OnboardCommand extends Command
@@ -123,6 +124,8 @@ class OnboardCommand extends Command
             'redirect_uri' => $redirect,
             'account_ids' => array_values($accounts),
         ]);
+
+        Log::info('Auth API Bootstrap Response: ' . $response->body());
 
         if ($response->failed()) {
             $this->error('Auth API bootstrap failed: ' . $response->body());
