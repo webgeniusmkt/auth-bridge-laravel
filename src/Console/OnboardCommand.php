@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace AuthBridge\Laravel\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Console\Migrations\MigrateCommand;
+use Illuminate\Foundation\Console\VendorPublishCommand;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -101,9 +103,9 @@ class OnboardCommand extends Command
 
     private function ensureBridgeInstalled(): void
     {
-        $this->callSilent('vendor:publish', ['--tag' => 'auth-bridge-config', '--force' => true]);
-        $this->callSilent('vendor:publish', ['--tag' => 'auth-bridge-migrations', '--force' => true]);
-        $this->call('migrate');
+        $this->callSilent(VendorPublishCommand::class, ['--tag' => 'auth-bridge-config', '--force' => true]);
+        $this->callSilent(VendorPublishCommand::class, ['--tag' => 'auth-bridge-migrations', '--force' => true]);
+        $this->call(MigrateCommand::class, ['--force' => true]);
     }
 
     private function bootstrapApp(string $authBase, string $token, string $appKey, string $appName, string $redirect, array $accounts = []): ?array
