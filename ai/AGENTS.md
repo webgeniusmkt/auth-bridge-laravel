@@ -3,7 +3,7 @@
 ## Purpose
 This file defines the conventions, responsibilities, and resources used by all AI assistants in this repository.
 
-For any app functionality, see the [Product Requirements Document (PRD)](../docs/app-prd.md).
+For any app functionality, see the [Product Requirements Document (PRD)](../docs/app-prd.md) and [README.md](../README.md).
 
 We have the laravel-app-template at ../laravel-app-template/ which is a GitHub template from which one can create a new app repository and from the new repository run ./install.sh to create a new app with Laravel + Inertia + Svelte. This auth-bridge-laravel package is used to add authentication to the app with composer update webgeniusmkt/auth-bridge-laravel. The authentication calls the Auth API at ../auth-api/. The test app I've created from laravel-app-template is at ../refinepress/.
 
