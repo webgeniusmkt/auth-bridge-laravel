@@ -17,7 +17,7 @@ class OAuthController extends Controller
 
     private function publicBase(): string
     {
-        return rtrim((string) env('AUTH_BRIDGE_PUBLIC_URL', config('auth-bridge.base_url')), '/');
+        return rtrim((string) config('auth-bridge.public_url'), '/');
     }
 
     private function clientId(): string

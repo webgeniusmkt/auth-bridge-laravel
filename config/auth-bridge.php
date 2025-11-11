@@ -1,19 +1,53 @@
 <?php
 
 return [
-    'app_id' => env('AUTH_BRIDGE_APP_ID'),
-    'app_key' => env('AUTH_BRIDGE_APP_KEY'),
     /*
     |--------------------------------------------------------------------------
-    | Auth API Base URL
+    | Application Credentials (Onboarding)
     |--------------------------------------------------------------------------
     |
-    | This value is the base URL for the centralized Auth API. It should point
-    | to the versioned API root (for example: https://auth.example.com/api/v1).
+    | These credentials are used during the onboarding process when registering
+    | your application with the Auth API. After onboarding, the OAuth client
+    | credentials (OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET) are used instead.
     |
     */
 
-    'base_url' => env('AUTH_BRIDGE_BASE_URL', 'http://auth_api/api/v1'),
+    'app_id' => env('AUTH_BRIDGE_APP_ID'),
+    'app_key' => env('AUTH_BRIDGE_APP_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth API Base URL (Server-to-Server)
+    |--------------------------------------------------------------------------
+    |
+    | This value is the base URL for the centralized Auth API used for
+    | server-to-server communication. Should point to the versioned API root.
+    |
+    | Examples:
+    | - Docker internal: http://auth_api/api/v1
+    | - Production internal: https://auth-internal.example.com/api/v1
+    | - Production public: https://auth.example.com/api/v1
+    |
+    */
+
+    'base_url' => env('AUTH_BRIDGE_BASE_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth API Public URL (Browser Redirects)
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for OAuth redirects that happen in the user's browser.
+    | If not set, falls back to base_url. In many environments, the public URL
+    | differs from the internal server-to-server URL.
+    |
+    | Examples:
+    | - Docker: http://localhost:8001/api/v1 (where 8001 is the host port)
+    | - Production: https://auth.example.com/api/v1
+    |
+    */
+
+    'public_url' => env('AUTH_BRIDGE_PUBLIC_URL', env('AUTH_BRIDGE_BASE_URL')),
 
     /*
     |--------------------------------------------------------------------------
