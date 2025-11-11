@@ -1,5 +1,9 @@
 // --- AuthBridge scaffolding ---
 \Illuminate\Support\Facades\Route::middleware('web')->group(function () {
+    \Illuminate\Support\Facades\Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'show'])->name('onboarding.show');
+    \Illuminate\Support\Facades\Route::post('/onboarding/token', [\App\Http\Controllers\OnboardingController::class, 'getBootstrapToken'])->name('onboarding.token');
+    \Illuminate\Support\Facades\Route::post('/onboarding/run', [\App\Http\Controllers\OnboardingController::class, 'run'])->name('onboarding.run');
+
     \Illuminate\Support\Facades\Route::get('/', fn () => \Inertia\Inertia::render('Home'))->name('home');
     \Illuminate\Support\Facades\Route::get('/login', [\App\Http\Controllers\Auth\OAuthController::class, 'redirect'])->name('login');
     \Illuminate\Support\Facades\Route::get('/oauth/callback', [\App\Http\Controllers\Auth\OAuthController::class, 'callback'])->name('oauth.callback');

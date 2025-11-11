@@ -38,11 +38,27 @@ class ScaffoldCommand extends Command
         );
 
         $this->publishFileFromStub(
+            'app/Http/Controllers/OnboardingController.php',
+            app_path('Http/Controllers/OnboardingController.php')
+        );
+
+        $this->publishFileFromStub(
             'app/Http/Middleware/InjectAuthBridgeContext.php',
             app_path('Http/Middleware/InjectAuthBridgeContext.php')
         );
 
+        $this->publishFileFromStub(
+            'app/Http/Middleware/RedirectIfNotOnboarded.php',
+            app_path('Http/Middleware/RedirectIfNotOnboarded.php')
+        );
+
+        $this->publishFileFromStub(
+            'app/Support/OnboardingState.php',
+            app_path('Support/OnboardingState.php')
+        );
+
         $this->registerMiddlewareAlias();
+        $this->registerOnboardingMiddleware();
         $this->appendRoutes();
     }
 
@@ -96,6 +112,40 @@ class ScaffoldCommand extends Command
         $this->filesystem->put($kernel, $updated);
         $this->info('Registered route middleware alias: inject-auth-ctx.');
     }
+
+    private function registerOnboardingMiddleware(): void
+    {
+        $kernel = app_path('Http/Kernel.php');
+
+        if (! $this->filesystem->exists($kernel)) {
+            return;
+        }
+
+        $contents = $this->filesystem->get($kernel);
+        $middleware = '\\App\\Http\\Middleware\\RedirectIfNotOnboarded::class';
+
+        if (Str::contains($contents, $middleware)) {
+            return;
+        }
+
+        $needle = "'web' => [";
+
+        if (! Str::contains($contents, $needle)) {
+            $this->warn('Could not find web middleware group in app/Http/Kernel.php. Add RedirectIfNotOnboarded manually.');
+            return;
+        }
+
+        $updated = Str::replaceFirst($needle, $needle . "\n            {$middleware},", $contents);
+
+        if ($updated === $contents) {
+            $this->warn('Unable to register RedirectIfNotOnboarded middleware automatically.');
+            return;
+        }
+
+        $this->filesystem->put($kernel, $updated);
+        $this->info('Registered RedirectIfNotOnboarded in web middleware group.');
+    }
+
     private function appendRoutes(): void
     {
         $path = base_path('routes/web.php');
