@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'base_url' => env('AUTH_BRIDGE_BASE_URL', 'https://auth-api.test/api/v1'),
+    'base_url' => env('AUTH_BRIDGE_BASE_URL', 'http://auth_api/api/v1'),
 
     /*
     |--------------------------------------------------------------------------
