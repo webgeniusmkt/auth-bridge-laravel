@@ -46,6 +46,16 @@ class OAuthController extends Controller
         return (string) config('auth-bridge.guard.storage_key', 'api_token');
     }
 
+    private function stateCookieName(): string
+    {
+        return $this->storageKey() . '_state';
+    }
+
+    private function secureCookies(): bool
+    {
+        return app()->environment('production');
+    }
+
     public function redirect(Request $request)
     {
         $state = Str::random(32);
@@ -59,13 +69,33 @@ class OAuthController extends Controller
             'state' => $state,
         ]);
 
-        return redirect()->away($url);
+        $stateCookie = Cookie::create($this->stateCookieName())
+            ->withValue($state)
+            ->withHttpOnly(true)
+            ->withSecure($this->secureCookies())
+            ->withSameSite('lax')
+            ->withExpires(time() + 300);
+
+        return redirect()->away($url)->withCookie($stateCookie);
     }
 
     public function callback(Request $request)
     {
-        $state = $request->session()->pull('oauth_state');
-        abort_unless($state && $state === $request->query('state'), 400, 'Invalid state');
+        $stateFromSession = $request->session()->pull('oauth_state');
+        $stateFromCookie = $request->cookie($this->stateCookieName());
+        $incomingState = (string) $request->query('state');
+
+        $stateCleanupCookie = Cookie::create($this->stateCookieName())
+            ->withValue('')
+            ->withExpires(time() - 3600);
+
+        $isValidState = (
+            $stateFromSession && hash_equals($stateFromSession, $incomingState)
+        ) || (
+            $stateFromCookie && hash_equals($stateFromCookie, $incomingState)
+        );
+
+        abort_unless($isValidState, 400, 'Invalid state');
 
         // Use base() (internal URL) for server-to-server token exchange
         // Laravel Passport registers /oauth/token at the root level, not under /api/v1
@@ -99,13 +129,13 @@ class OAuthController extends Controller
         $cookie = Cookie::create($this->storageKey())
             ->withValue((string) $accessToken)
             ->withHttpOnly(false)
-            ->withSecure(app()->environment('production'))
+            ->withSecure($this->secureCookies())
             ->withSameSite('lax')
             ->withExpires(time() + $expiresIn);
 
         session(['x_app_key' => $this->appKey()]);
 
-        return redirect('/')->withCookie($cookie);
+        return redirect('/')->withCookie($cookie)->withCookie($stateCleanupCookie);
     }
 
     public function logout(Request $request)
@@ -121,6 +151,10 @@ class OAuthController extends Controller
             ->withValue('')
             ->withExpires(time() - 3600);
 
-        return redirect('/login')->withCookie($cookie);
+        $stateCleanupCookie = Cookie::create($this->stateCookieName())
+            ->withValue('')
+            ->withExpires(time() - 3600);
+
+        return redirect('/login')->withCookie($cookie)->withCookie($stateCleanupCookie);
     }
 }
