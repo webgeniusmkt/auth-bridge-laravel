@@ -121,7 +121,6 @@ class OnboardCommand extends Command
         $url = rtrim($authBase, '/') . '/' . ltrim($path, '/');
         $this->info("Bootstrapping app in Auth API… {$url}");
 
-        dump('Auth API URL: ' . $url);
         Log::debug('Auth API URL: ' . $url);
 
         try {
@@ -132,7 +131,6 @@ class OnboardCommand extends Command
                 'account_ids' => array_values($accounts),
             ]);
 
-            dump('Auth API Bootstrap Response: ' . $response->body());
             Log::debug('Auth API Bootstrap Response: ' . $response->body());
             Log::info('Auth API Bootstrap Response: ' . $response->body());
 
@@ -141,7 +139,6 @@ class OnboardCommand extends Command
                 return null;
             }
         } catch (\Throwable $e) {
-            dump('Auth API bootstrap request failed: ' . $e->getMessage());
             Log::debug('Auth API bootstrap request failed: ' . $e->getMessage());
             $this->error('Auth API bootstrap request failed: ' . $e->getMessage());
             return null;
