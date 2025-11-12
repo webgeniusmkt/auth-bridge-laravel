@@ -157,7 +157,9 @@ class OnboardCommand extends Command
         foreach ($keyValue as $key => $value) {
             $pattern = "/^" . preg_quote($key, '/') . "=.*$/m";
             // Quote the value if it contains special characters or spaces
-            $quotedValue = $this->shouldQuoteValue($value) ? '"' . addcslashes($value, '"\\') . '"' : $value;
+            $quotedValue = $this->shouldQuoteValue($value)
+                ? '"' . addcslashes((string) $value, '"\\') . '"'
+                : (string) $value;
             $line = $key . '=' . $quotedValue;
             $env = preg_match($pattern, $env)
                 ? (string) preg_replace($pattern, $line, $env)
@@ -172,8 +174,13 @@ class OnboardCommand extends Command
         }
     }
 
-    private function shouldQuoteValue(string $value): bool
+    private function shouldQuoteValue(mixed $value): bool
     {
+        // Don't quote non-string values (integers, booleans, etc.)
+        if (!is_string($value)) {
+            return false;
+        }
+
         // Quote if value contains special characters: $, space, #, ", ', \, etc.
         return preg_match('/[\s$#"\'\\\]/', $value) === 1;
     }
