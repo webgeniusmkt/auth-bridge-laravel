@@ -81,16 +81,22 @@ class AuthBridgeServiceProvider extends ServiceProvider
             return;
         }
 
+        // existing publishes...
         $this->publishes([
             __DIR__ . '/../config/auth-bridge.php' => $this->app->configPath('auth-bridge.php'),
         ], 'auth-bridge-config');
 
         $timestamp = date('Y_m_d_His');
-
         $this->publishes([
             __DIR__ . '/../database/migrations/2025_01_01_000000_add_auth_bridge_columns_to_users_table.php'
-            => $this->app->databasePath("migrations/{$timestamp}_add_auth_bridge_columns_to_users_table.php"),
+                => $this->app->databasePath("migrations/{$timestamp}_add_auth_bridge_columns_to_users_table.php"),
         ], 'auth-bridge-migrations');
+
+        // ⭐ Publish your Svelte pages from the package's stubs path:
+        // src/ (this file) → ../stubs/scaffold/resources/js/Pages → host resources/js/Pages/AuthBridge
+        $this->publishes([
+            __DIR__ . '/../stubs/scaffold/resources/js/Pages' => resource_path('js/Pages/AuthBridge'),
+        ], 'auth-bridge-svelte-pages');
     }
 
     protected function registerGuard(): void
