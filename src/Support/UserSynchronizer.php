@@ -135,7 +135,7 @@ class UserSynchronizer
         $user->save();
 
         return $user;
-}
+    }
 
     private function encodeJsonValue(mixed $value): mixed
     {
