@@ -67,9 +67,10 @@ class OAuthController extends Controller
         $state = $request->session()->pull('oauth_state');
         abort_unless($state && $state === $request->query('state'), 400, 'Invalid state');
 
-        // Use publicBase() to get the external URL without /api/v1 suffix
+        // Use base() (internal URL) for server-to-server token exchange
         // Laravel Passport registers /oauth/token at the root level, not under /api/v1
-        $tokenUrl = rtrim(str_replace('/api/v1', '', $this->publicBase()), '/') . '/oauth/token';
+        // Note: This is a server-to-server call, so we use the internal Docker URL
+        $tokenUrl = rtrim(str_replace('/api/v1', '', $this->base()), '/') . '/oauth/token';
 
         $response = Http::asForm()->post($tokenUrl, [
             'grant_type' => 'authorization_code',
