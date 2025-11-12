@@ -94,6 +94,10 @@ class OnboardCommand extends Command
             'OAUTH_CLIENT_SECRET' => $clientSecret,
         ], fn ($value) => ! is_null($value)));
 
+        if ($this->call('config:clear') !== self::SUCCESS) {
+            return self::FAILURE;
+        }
+
         if ($this->call(ScaffoldCommand::class) !== self::SUCCESS) {
             return self::FAILURE;
         }
