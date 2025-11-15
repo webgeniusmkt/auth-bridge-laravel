@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Cookie;
 
 class OAuthController extends Controller
@@ -76,7 +77,13 @@ class OAuthController extends Controller
             ->withSameSite('lax')
             ->withExpires(time() + 300);
 
-        return redirect()->away($url)->withCookie($stateCookie);
+        $response = redirect()->away($url)->withCookie($stateCookie);
+
+        if ($request->header('X-Inertia')) {
+            return Inertia::location($url)->withCookie($stateCookie);
+        }
+
+        return $response;
     }
 
     public function callback(Request $request)

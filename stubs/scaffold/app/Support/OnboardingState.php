@@ -16,8 +16,8 @@ final class OnboardingState
             return true;
         }
 
-        if (! File::exists(self::lockPath())) {
-            return false;
+        if (File::exists(self::lockPath())) {
+            return true;
         }
 
         return filled(config('auth-bridge.oauth.client_id')) && filled(config('auth-bridge.oauth.client_secret'));
