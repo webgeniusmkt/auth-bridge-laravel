@@ -7,6 +7,7 @@
   export let size = 'default';
   export let disabled = false;
   export let className = '';
+  export let href = undefined;
 
   const dispatch = createEventDispatcher();
 
@@ -25,12 +26,24 @@
   };
 </script>
 
-<button
-  {type}
-  class={cn(baseClasses, variants[variant] ?? variants.default, sizes[size] ?? sizes.default, className)}
-  {disabled}
-  {...$$restProps}
-  on:click={(event) => dispatch('click', event)}
->
-  <slot />
-</button>
+{#if href}
+  <a
+    href={href}
+    class={cn(baseClasses, variants[variant] ?? variants.default, sizes[size] ?? sizes.default, className)}
+    aria-disabled={disabled}
+    {...$$restProps}
+    on:click={(event) => dispatch('click', event)}
+  >
+    <slot />
+  </a>
+{:else}
+  <button
+    {type}
+    class={cn(baseClasses, variants[variant] ?? variants.default, sizes[size] ?? sizes.default, className)}
+    {disabled}
+    {...$$restProps}
+    on:click={(event) => dispatch('click', event)}
+  >
+    <slot />
+  </button>
+{/if}

@@ -29,7 +29,8 @@ class OAuthController extends Controller
         [$state, $stateCookie] = $this->prepareState($request);
 
         $intended = $this->oauthAuthorizeUrl($state);
-        $url = $this->publicBase() . '/login/social/' . urlencode($provider) . '?' . http_build_query([
+        $providerPath = 'login/social/' . urlencode($provider);
+        $url = $this->authServerEndpoint($this->publicBase(), $providerPath) . '?' . http_build_query([
             'intended' => $intended,
         ]);
 
@@ -57,7 +58,7 @@ class OAuthController extends Controller
         // Use base() (internal URL) for server-to-server token exchange
         // Laravel Passport registers /oauth/token at the root level, not under /api/v1
         // Note: This is a server-to-server call, so we use the internal Docker URL
-        $tokenUrl = rtrim(str_replace('/api/v1', '', $this->base()), '/') . '/oauth/token';
+        $tokenUrl = $this->authServerEndpoint($this->base(), 'oauth/token');
 
         $response = Http::asForm()->post($tokenUrl, [
             'grant_type' => 'authorization_code',
@@ -98,7 +99,7 @@ class OAuthController extends Controller
     public function logout(Request $request)
     {
         if ($token = $request->session()->pull('access_token')) {
-            Http::withToken($token)->post($this->base() . '/logout');
+            Http::withToken($token)->post($this->authServerEndpoint($this->base(), 'logout'));
         }
 
         $request->session()->invalidate();
@@ -191,7 +192,9 @@ class OAuthController extends Controller
 
     private function oauthAuthorizeUrl(string $state): string
     {
-        return $this->publicBase() . '/oauth/authorize?' . http_build_query($this->oauthParameters($state));
+        $base = $this->authServerEndpoint($this->publicBase(), 'oauth/authorize');
+
+        return $base . '?' . http_build_query($this->oauthParameters($state));
     }
 
     private function inertiaAwareRedirect(Request $request, string $url, Cookie $stateCookie)
@@ -201,5 +204,29 @@ class OAuthController extends Controller
         }
 
         return redirect()->away($url)->withCookie($stateCookie);
+    }
+
+    private function authServerEndpoint(string $base, string $path): string
+    {
+        $root = $this->authServerBase($base);
+
+        if ($root === '') {
+            return '/' . ltrim($path, '/');
+        }
+
+        return rtrim($root, '/') . '/' . ltrim($path, '/');
+    }
+
+    private function authServerBase(string $url): string
+    {
+        $trimmed = rtrim($url ?? '', '/');
+
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $normalized = preg_replace('#/api(?:/v[\d\.]+)?$#', '', $trimmed);
+
+        return $normalized !== '' ? $normalized : $trimmed;
     }
 }

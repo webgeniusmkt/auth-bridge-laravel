@@ -6,14 +6,6 @@
   export let title = '';
 
   const logout = () => router.post('/logout');
-  const login = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/login');
-      return;
-    }
-
-    router.visit('/login');
-  };
 
   $: appName = $page.props?.app?.name ?? 'Laravel App';
   $: pageTitle = title ? `${title} · ${appName}` : appName;
@@ -48,7 +40,7 @@
             Log out
           </Button>
         {:else}
-          <Button type="button" on:click={login}>
+          <Button href="/login">
             Log in
           </Button>
         {/if}
