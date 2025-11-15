@@ -6,6 +6,7 @@
 
     \Illuminate\Support\Facades\Route::get('/', fn () => \Inertia\Inertia::render('Home'))->name('home');
     \Illuminate\Support\Facades\Route::get('/login', [\App\Http\Controllers\Auth\OAuthController::class, 'redirect'])->name('login');
+    \Illuminate\Support\Facades\Route::get('/login/social/{provider}', [\App\Http\Controllers\Auth\OAuthController::class, 'social'])->name('login.social');
     \Illuminate\Support\Facades\Route::get('/oauth/callback', [\App\Http\Controllers\Auth\OAuthController::class, 'callback'])->name('oauth.callback');
     \Illuminate\Support\Facades\Route::post('/logout', [\App\Http\Controllers\Auth\OAuthController::class, 'logout'])->name('logout');
 });

@@ -19,6 +19,8 @@ class RedirectIfNotOnboarded
         'onboarding/*',
         'health',
         'login',
+        'login/social',
+        'login/social/*',
         'logout',
         'build/*',
         'assets/*',

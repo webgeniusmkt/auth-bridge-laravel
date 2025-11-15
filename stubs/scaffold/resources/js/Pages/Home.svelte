@@ -14,6 +14,14 @@
 
     router.visit('/login');
   };
+  const continueWithGoogle = () => {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/login/social/google');
+      return;
+    }
+
+    router.visit('/login/social/google');
+  };
   const goToRegister = () => router.visit('/register');
   const goToDashboard = () => router.visit('/dashboard');
   const logout = () => router.post('/logout');
@@ -56,6 +64,9 @@
         </Button>
         <Button variant="secondary" on:click={goToRegister}>
           Register
+        </Button>
+        <Button variant="ghost" className="border border-input" on:click={continueWithGoogle}>
+          Continue with Google
         </Button>
       {/if}
     </div>

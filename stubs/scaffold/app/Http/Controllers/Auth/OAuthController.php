@@ -12,78 +12,28 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 class OAuthController extends Controller
 {
-    private function base(): string
-    {
-        return rtrim((string) config('auth-bridge.base_url'), '/');
-    }
-
-    private function publicBase(): string
-    {
-        return rtrim((string) config('auth-bridge.public_url'), '/');
-    }
-
-    private function clientId(): string
-    {
-        return (string) config('auth-bridge.oauth.client_id');
-    }
-
-    private function clientSecret(): string
-    {
-        return (string) config('auth-bridge.oauth.client_secret');
-    }
-
-    private function redirectUri(): string
-    {
-        return route('oauth.callback', absolute: true);
-    }
-
-    private function appKey(): string
-    {
-        return (string) config('auth-bridge.app_key');
-    }
-
-    private function storageKey(): string
-    {
-        return (string) config('auth-bridge.guard.storage_key', 'api_token');
-    }
-
-    private function stateCookieName(): string
-    {
-        return $this->storageKey() . '_state';
-    }
-
-    private function secureCookies(): bool
-    {
-        return app()->environment('production');
-    }
+    private const SUPPORTED_SOCIAL_PROVIDERS = ['google'];
 
     public function redirect(Request $request)
     {
-        $state = Str::random(32);
-        $request->session()->put('oauth_state', $state);
+        [$state, $stateCookie] = $this->prepareState($request);
+        $url = $this->oauthAuthorizeUrl($state);
 
-        $url = $this->publicBase() . '/oauth/authorize?' . http_build_query([
-            'client_id' => $this->clientId(),
-            'redirect_uri' => $this->redirectUri(),
-            'response_type' => 'code',
-            'scope' => '',
-            'state' => $state,
+        return $this->inertiaAwareRedirect($request, $url, $stateCookie);
+    }
+
+    public function social(Request $request, string $provider)
+    {
+        abort_unless(in_array($provider, self::SUPPORTED_SOCIAL_PROVIDERS, true), 404);
+
+        [$state, $stateCookie] = $this->prepareState($request);
+
+        $intended = $this->oauthAuthorizeUrl($state);
+        $url = $this->publicBase() . '/login/social/' . urlencode($provider) . '?' . http_build_query([
+            'intended' => $intended,
         ]);
 
-        $stateCookie = Cookie::create($this->stateCookieName())
-            ->withValue($state)
-            ->withHttpOnly(true)
-            ->withSecure($this->secureCookies())
-            ->withSameSite('lax')
-            ->withExpires(time() + 300);
-
-        $response = redirect()->away($url)->withCookie($stateCookie);
-
-        if ($request->header('X-Inertia')) {
-            return Inertia::location($url)->withCookie($stateCookie);
-        }
-
-        return $response;
+        return $this->inertiaAwareRedirect($request, $url, $stateCookie);
     }
 
     public function callback(Request $request)
@@ -163,5 +113,93 @@ class OAuthController extends Controller
             ->withExpires(time() - 3600);
 
         return redirect('/login')->withCookie($cookie)->withCookie($stateCleanupCookie);
+    }
+
+    private function base(): string
+    {
+        return rtrim((string) config('auth-bridge.base_url'), '/');
+    }
+
+    private function publicBase(): string
+    {
+        return rtrim((string) config('auth-bridge.public_url'), '/');
+    }
+
+    private function clientId(): string
+    {
+        return (string) config('auth-bridge.oauth.client_id');
+    }
+
+    private function clientSecret(): string
+    {
+        return (string) config('auth-bridge.oauth.client_secret');
+    }
+
+    private function redirectUri(): string
+    {
+        return route('oauth.callback', absolute: true);
+    }
+
+    private function appKey(): string
+    {
+        return (string) config('auth-bridge.app_key');
+    }
+
+    private function storageKey(): string
+    {
+        return (string) config('auth-bridge.guard.storage_key', 'api_token');
+    }
+
+    private function stateCookieName(): string
+    {
+        return $this->storageKey() . '_state';
+    }
+
+    private function secureCookies(): bool
+    {
+        return app()->environment('production');
+    }
+
+    /**
+     * @return array{0: string, 1: Cookie}
+     */
+    private function prepareState(Request $request): array
+    {
+        $state = Str::random(32);
+        $request->session()->put('oauth_state', $state);
+
+        $stateCookie = Cookie::create($this->stateCookieName())
+            ->withValue($state)
+            ->withHttpOnly(true)
+            ->withSecure($this->secureCookies())
+            ->withSameSite('lax')
+            ->withExpires(time() + 300);
+
+        return [$state, $stateCookie];
+    }
+
+    private function oauthParameters(string $state): array
+    {
+        return [
+            'client_id' => $this->clientId(),
+            'redirect_uri' => $this->redirectUri(),
+            'response_type' => 'code',
+            'scope' => '',
+            'state' => $state,
+        ];
+    }
+
+    private function oauthAuthorizeUrl(string $state): string
+    {
+        return $this->publicBase() . '/oauth/authorize?' . http_build_query($this->oauthParameters($state));
+    }
+
+    private function inertiaAwareRedirect(Request $request, string $url, Cookie $stateCookie)
+    {
+        if ($request->header('X-Inertia')) {
+            return Inertia::location($url)->withCookie($stateCookie);
+        }
+
+        return redirect()->away($url)->withCookie($stateCookie);
     }
 }
