@@ -6,7 +6,14 @@
 
   export let auth = { isAuthenticated: false, user: null };
 
-  const goToLogin = () => router.visit('/login');
+  const goToLogin = () => {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/login');
+      return;
+    }
+
+    router.visit('/login');
+  };
   const goToRegister = () => router.visit('/register');
   const goToDashboard = () => router.visit('/dashboard');
   const logout = () => router.post('/logout');
