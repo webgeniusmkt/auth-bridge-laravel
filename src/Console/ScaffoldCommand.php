@@ -58,6 +58,11 @@ class ScaffoldCommand extends Command
         );
 
         $this->publishFileFromStub(
+            'app/Support/OnboardingCleanup.php',
+            app_path('Support/OnboardingCleanup.php')
+        );
+
+        $this->publishFileFromStub(
             'app/Http/Middleware/HandleInertiaRequests.php',
             app_path('Http/Middleware/HandleInertiaRequests.php')
         );

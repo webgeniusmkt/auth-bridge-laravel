@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Support\OnboardingCleanup;
 use App\Support\OnboardingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -107,6 +108,8 @@ class OnboardingController extends Controller
         Artisan::call('config:clear');
         Artisan::call('route:clear');
         Artisan::call('cache:clear');
+
+        OnboardingCleanup::run();
 
         return response()->json(['ok' => true]);
     }
