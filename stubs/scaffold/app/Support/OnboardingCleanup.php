@@ -31,6 +31,7 @@ final class OnboardingCleanup
         $directories = [
             resource_path('js/Pages/Onboarding'),
             resource_path('js/Pages/AuthBridge/Onboarding'),
+            base_path('scripts'),
         ];
 
         foreach ($directories as $directory) {
