@@ -76,74 +76,61 @@ class ScaffoldCommand extends Command
 
     private function registerMiddlewareAlias(): void
     {
-        $kernel = app_path('Http/Kernel.php');
+        $bootstrap = base_path('bootstrap/app.php');
 
-        if (! $this->filesystem->exists($kernel)) {
+        if (! $this->filesystem->exists($bootstrap)) {
             return;
         }
 
-        $contents = $this->filesystem->get($kernel);
+        $contents = $this->filesystem->get($bootstrap);
 
-        if (Str::contains($contents, 'inject-auth-ctx')) {
+        if (Str::contains($contents, "'inject-auth-ctx'")) {
             return;
         }
 
-        if (Str::contains($contents, 'protected $middlewareAliases = [')) {
-            $updated = str_replace(
-                'protected $middlewareAliases = [',
-                "protected \$middlewareAliases = [\n        'inject-auth-ctx' => \\App\\Http\\Middleware\\InjectAuthBridgeContext::class,",
-                $contents,
-                $count
-            );
-        } else {
-            $updated = str_replace(
-                'protected $routeMiddleware = [',
-                "protected \$routeMiddleware = [\n        'inject-auth-ctx' => \\App\\Http\\Middleware\\InjectAuthBridgeContext::class,",
-                $contents,
-                $count
-            );
-        }
+        $needle = '->withMiddleware(function (Middleware $middleware): void {';
 
-        if (($count ?? 0) === 0) {
-            $this->warn('Could not automatically register inject-auth-ctx middleware. Add it manually in app/Http/Kernel.php.');
+        if (! Str::contains($contents, $needle)) {
+            $this->warn('Unable to locate withMiddleware() closure in bootstrap/app.php. Register inject-auth-ctx alias manually.');
             return;
         }
 
-        $this->filesystem->put($kernel, $updated);
-        $this->info('Registered route middleware alias: inject-auth-ctx.');
+        $snippet = "        \$middleware->alias([\n            'inject-auth-ctx' => \\App\\Http\\Middleware\\InjectAuthBridgeContext::class,\n        ]);\n";
+
+        $updated = Str::replaceFirst($needle, $needle . "\n" . $snippet, $contents);
+
+        $this->filesystem->put($bootstrap, $updated);
+        $this->info('Registered inject-auth-ctx middleware alias via bootstrap/app.php.');
     }
 
     private function registerOnboardingMiddleware(): void
     {
-        $kernel = app_path('Http/Kernel.php');
+        $bootstrap = base_path('bootstrap/app.php');
 
-        if (! $this->filesystem->exists($kernel)) {
+        if (! $this->filesystem->exists($bootstrap)) {
             return;
         }
 
-        $contents = $this->filesystem->get($kernel);
+        $contents = $this->filesystem->get($bootstrap);
         $middleware = '\\App\\Http\\Middleware\\RedirectIfNotOnboarded::class';
 
         if (Str::contains($contents, $middleware)) {
             return;
         }
 
-        $needle = "'web' => [";
+        $needle = '->withMiddleware(function (Middleware $middleware): void {';
 
         if (! Str::contains($contents, $needle)) {
-            $this->warn('Could not find web middleware group in app/Http/Kernel.php. Add RedirectIfNotOnboarded manually.');
+            $this->warn('Unable to locate withMiddleware() closure in bootstrap/app.php. Add RedirectIfNotOnboarded manually.');
             return;
         }
 
-        $updated = Str::replaceFirst($needle, $needle . "\n            {$middleware},", $contents);
+        $snippet = "        \$middleware->appendToGroup('web', [\n            {$middleware},\n        ]);\n";
 
-        if ($updated === $contents) {
-            $this->warn('Unable to register RedirectIfNotOnboarded middleware automatically.');
-            return;
-        }
+        $updated = Str::replaceFirst($needle, $needle . "\n" . $snippet, $contents);
 
-        $this->filesystem->put($kernel, $updated);
-        $this->info('Registered RedirectIfNotOnboarded in web middleware group.');
+        $this->filesystem->put($bootstrap, $updated);
+        $this->info('Registered RedirectIfNotOnboarded in the web middleware group via bootstrap/app.php.');
     }
 
     private function appendRoutes(): void
