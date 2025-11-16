@@ -47,6 +47,17 @@ class UserSynchronizer
             ->first();
 
         if (! $user) {
+            $email = Arr::get($payload, 'email');
+            $normalizedEmail = is_string($email) ? strtolower($email) : null;
+
+            if ($normalizedEmail) {
+                $user = $modelClass::query()
+                    ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+                    ->first();
+            }
+        }
+
+        if (! $user) {
             $user = new $modelClass();
         }
 
@@ -62,6 +73,7 @@ class UserSynchronizer
         }
 
         $email = Arr::get($payload, 'email');
+        $normalizedEmail = is_string($email) ? strtolower($email) : $email;
 
         $accounts = Arr::get($payload, 'accounts', []);
         $apps = Arr::wrap(Arr::get($payload, 'apps'));
@@ -81,7 +93,7 @@ class UserSynchronizer
         $attributes = [
             $externalIdColumn => $externalId,
             'name' => Arr::get($payload, 'name'),
-            'email' => is_string($email) ? strtolower($email) : $email,
+            'email' => $normalizedEmail,
         ];
 
         $statusColumn = $this->columns['status_column'] ?? 'external_status';
