@@ -22,7 +22,7 @@ class OnboardingController extends Controller
             return redirect()->route('home');
         }
 
-        return Inertia::render('AuthBridge/Onboarding/Wizard');
+        return Inertia::render('Onboarding/Wizard');
     }
 
     public function getBootstrapToken(Request $request): JsonResponse
