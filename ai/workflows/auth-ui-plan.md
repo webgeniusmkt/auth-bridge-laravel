@@ -1,9 +1,9 @@
 # Auth UI Plan
 
-> **Update (2025-11)**: The Laravel/Inertia auth flows described below now live inside the `webgeniusmkt/auth-bridge-laravel` package and are scaffolded via `php artisan auth-bridge:onboard`. Keep this doc for historical context only.
+> **Update (2025-11)**: The Laravel/Inertia auth flows described below now live inside the `rockstoneaidev/auth-bridge-laravel` package and are scaffolded via `php artisan auth-bridge:onboard`. Keep this doc for historical context only.
 
 ## Goals
-- Provide UX coverage for the Auth API endpoints listed in PRD §3.1 without bloating the shared `webgeniusmkt/auth-bridge-laravel` package.
+- Provide UX coverage for the Auth API endpoints listed in PRD §3.1 without bloating the shared `rockstoneaidev/auth-bridge-laravel` package.
 - Keep all UI, routing, and state management inside `laravel-app-template` (Inertia + Svelte shell) while delegating token verification and `/user` hydration to the Auth Bridge guard.
 - Implement iteratively: plan all flows first, then bring `/login` live to unblock local sign-in before expanding to the remaining forms.
 

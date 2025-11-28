@@ -1,5 +1,5 @@
 {
-    "name": "webgeniusmkt/auth-bridge-laravel",
+    "name": "rockstoneaidev/auth-bridge-laravel",
     "description": "Bridge package for Laravel applications to authenticate against the centralized Auth API service.",
     "type": "library",
     "license": "MIT",

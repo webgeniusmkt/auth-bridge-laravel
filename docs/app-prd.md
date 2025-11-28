@@ -12,6 +12,8 @@
 **Summary:**  
 Auth Bridge Laravel is a reusable Laravel package that connects any Laravel + Inertia + Svelte app to a central authorization API (**auth-api**). It handles all authentication, registration, 2FA, and user context, so new apps can be launched instantly without custom auth logic. The package syncs a minimal local user record, delegates all token/role/permission logic to the central API, and ships with a ready-made UI (login, registration, etc.) scaffolded into the app.
 
+The laravel-app-template is at ../laravel-app-template/ and the auth-api is at ../auth-api/ so you can see the code there. From the laravel-app-template and it's install.sh script together with this auth-bridge-laravel package I've created the RefinePress app at ../refinepress/.
+
 ---
 
 ## 2. Goals & Success Metrics
@@ -41,11 +43,11 @@ Auth Bridge Laravel is a reusable Laravel package that connects any Laravel + In
     - Scaffolds Inertia + Svelte UI for login, registration, 2FA, etc.
     - Handles token validation, user hydration, and role/permission checks via the API.
     - Provides install scripts and onboarding commands.
-- Integration with [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template) for rapid app creation.
+- Integration with [laravel-app-template](https://github.com/rockstoneaidev/laravel-app-template) for rapid app creation.
 - Documentation for AI agents and human developers (see [AI Collaboration Playbook](../ai/AGENTS.md)).
 
 **Out of Scope:**
-- The central auth-api itself (see [auth-api repo](https://github.com/webgeniusmkt/auth-api)).
+- The central auth-api itself (see [auth-api repo](https://github.com/rockstoneaidev/auth-api)).
 - Custom business logic for downstream apps.
 - UI customization beyond the scaffolded defaults (apps can override after install).
 
@@ -71,7 +73,7 @@ Auth Bridge Laravel is a reusable Laravel package that connects any Laravel + In
     - `install.sh` script in template runs:
         - Laravel install
         - Inertia + Svelte install
-        - `composer require webgeniusmkt/auth-bridge-laravel`
+        - `composer require rockstoneaidev/auth-bridge-laravel`
         - `php artisan auth-bridge:onboard ...` (registers app, sets up .env, publishes UI)
     - See [docs/setup/auth-bridge.md](./setup/auth-bridge.md) for details.
 
@@ -93,13 +95,13 @@ Auth Bridge Laravel is a reusable Laravel package that connects any Laravel + In
 ## 6. Integration & Usage
 
 **For a new app:**
-1. Create from [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template).
+1. Create from [laravel-app-template](https://github.com/rockstoneaidev/laravel-app-template).
 2. Run `install.sh` (or manual steps as in [docs/setup/auth-bridge.md](./setup/auth-bridge.md)).
 3. App is ready with full auth, user context, and UI.
 4. Customize UI as needed after initial scaffold.
 
 **For the central API:**  
-See [auth-api/README.md](https://github.com/webgeniusmkt/auth-api/blob/main/README.md) and [docs/setup/testing-apps.md](https://github.com/webgeniusmkt/auth-api/blob/main/docs/setup/testing-apps.md) for details on registering new apps and managing OAuth clients.
+See [auth-api/README.md](https://github.com/rockstoneaidev/auth-api/blob/main/README.md) and [docs/setup/testing-apps.md](https://github.com/rockstoneaidev/auth-api/blob/main/docs/setup/testing-apps.md) for details on registering new apps and managing OAuth clients.
 
 ---
 
@@ -107,8 +109,8 @@ See [auth-api/README.md](https://github.com/webgeniusmkt/auth-api/blob/main/READ
 
 - [AI Collaboration Playbook](../ai/AGENTS.md)
 - [Auth Bridge Integration Guide](./setup/auth-bridge.md)
-- [laravel-app-template](https://github.com/webgeniusmkt/laravel-app-template)
-- [auth-api](https://github.com/webgeniusmkt/auth-api)
+- [laravel-app-template](https://github.com/rockstoneaidev/laravel-app-template)
+- [auth-api](https://github.com/rockstoneaidev/auth-api)
 - [Testing Apps Setup](./setup/testing-apps.md)
 
 ---

@@ -1,6 +1,6 @@
 # Auth Bridge for Laravel
 
-`webgeniusmkt/auth-bridge-laravel` is a reusable bridge package for Laravel applications that authenticate and authorize via the centralized [Auth API service](https://github.com/webgeniusmkt/auth-api). It keeps a lightweight local user record in sync with the external identity provider while delegating all token handling, roles, and permissions to the Auth API.
+`rockstoneaidev/auth-bridge-laravel` is a reusable bridge package for Laravel applications that authenticate and authorize via the centralized [Auth API service](https://github.com/rockstoneaidev/auth-api). It keeps a lightweight local user record in sync with the external identity provider while delegating all token handling, roles, and permissions to the Auth API.
 
 ## Requirements
 
@@ -11,7 +11,7 @@
 ## Installation
 
 ```bash
-composer require webgeniusmkt/auth-bridge-laravel
+composer require rockstoneaidev/auth-bridge-laravel
 ```
 
 Publish the configuration (optional) and migrations, then migrate:
