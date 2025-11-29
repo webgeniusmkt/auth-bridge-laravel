@@ -85,7 +85,7 @@ class ScaffoldCommand extends Command
         $this->publishDirectoryFromStub('resources/js/Pages', resource_path('js/Pages'));
     }
 
-    private function registerMiddlewareAlias(): void
+    private function registerAuthContextMiddleware(): void
     {
         $bootstrap = base_path('bootstrap/app.php');
 
@@ -95,23 +95,29 @@ class ScaffoldCommand extends Command
 
         $contents = $this->filesystem->get($bootstrap);
 
-        if (Str::contains($contents, "'inject-auth-ctx'")) {
-            return;
+        // Register alias if missing
+        if (! Str::contains($contents, "'inject-auth-ctx'")) {
+            $needle = '->withMiddleware(function (Middleware $middleware): void {';
+            if (Str::contains($contents, $needle)) {
+                $aliasSnippet = "        \$middleware->alias([\n            'inject-auth-ctx' => \\App\\Http\\Middleware\\InjectAuthBridgeContext::class,\n        ]);\n";
+                $contents = Str::replaceFirst($needle, $needle . "\n" . $aliasSnippet, $contents);
+                $this->info('Registered inject-auth-ctx middleware alias via bootstrap/app.php.');
+            }
         }
 
-        $needle = '->withMiddleware(function (Middleware $middleware): void {';
-
-        if (! Str::contains($contents, $needle)) {
-            $this->warn('Unable to locate withMiddleware() closure in bootstrap/app.php. Register inject-auth-ctx alias manually.');
-            return;
+        // Prepend to web group if missing
+        $middlewareClass = '\\App\\Http\\Middleware\\InjectAuthBridgeContext::class';
+        if (! Str::contains($contents, $middlewareClass)) {
+            $needle = '->withMiddleware(function (Middleware $middleware): void {';
+            if (Str::contains($contents, $needle)) {
+                // We prepend to ensure it runs before HandleInertiaRequests
+                $prependSnippet = "        \$middleware->prependToGroup('web', [\n            {$middlewareClass},\n        ]);\n";
+                $contents = Str::replaceFirst($needle, $needle . "\n" . $prependSnippet, $contents);
+                $this->info('Prepended InjectAuthBridgeContext to web middleware group via bootstrap/app.php.');
+            }
         }
 
-        $snippet = "        \$middleware->alias([\n            'inject-auth-ctx' => \\App\\Http\\Middleware\\InjectAuthBridgeContext::class,\n        ]);\n";
-
-        $updated = Str::replaceFirst($needle, $needle . "\n" . $snippet, $contents);
-
-        $this->filesystem->put($bootstrap, $updated);
-        $this->info('Registered inject-auth-ctx middleware alias via bootstrap/app.php.');
+        $this->filesystem->put($bootstrap, $contents);
     }
 
     private function registerOnboardingMiddleware(): void
