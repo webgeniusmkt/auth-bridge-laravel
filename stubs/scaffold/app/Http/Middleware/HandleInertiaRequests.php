@@ -35,7 +35,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name', 'Laravel App'),
             ],
             'auth' => [
-                'isAuthenticated' => fn (): bool => $user !== null,
+                'isAuthenticated' => $user !== null,
                 'portal_url' => $this->portalUrl(),
                 'user' => fn (): ?array => $user
                     ? [
