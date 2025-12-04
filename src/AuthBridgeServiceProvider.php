@@ -44,7 +44,6 @@ class AuthBridgeServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        Log::info('AuthBridgeServiceProvider: register() method called.');
         $this->mergeConfigFrom(__DIR__ . '/../config/auth-bridge.php', 'auth-bridge');
 
         $this->app->singleton(AuthBridgeClient::class, function (Container $app): AuthBridgeClient {
@@ -66,7 +65,6 @@ class AuthBridgeServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Log::info('AuthBridgeServiceProvider: boot() method called.');
         $this->commands(self::COMMANDS);
 
         $this->registerPublishing();
