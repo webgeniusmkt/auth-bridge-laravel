@@ -153,7 +153,7 @@ class AuthBridgeServiceProvider extends ServiceProvider
             return new AuthBridgeGuard(
                 name: $name,
                 request: $app['request'],
-                provider: $app->make(AuthProviderInterface::class),
+                authProvider: $app->make(AuthProviderInterface::class),
                 synchronizer: $synchronizer,
                 cache: $cache,
                 events: $events,

@@ -29,7 +29,7 @@ class AuthBridgeGuard implements Guard
     public function __construct(
         private readonly string $name,
         private Request $request,
-        private readonly AuthProviderInterface $provider,
+        private readonly AuthProviderInterface $authProvider,
         private readonly UserSynchronizer $synchronizer,
         private readonly CacheRepository $cache,
         private readonly Dispatcher $events,
@@ -58,10 +58,10 @@ class AuthBridgeGuard implements Guard
             $payload = $this->cache->remember(
                 $cacheKey,
                 $ttl,
-                fn () => $this->provider->authenticate($token, $headers),
+                fn () => $this->authProvider->authenticate($token, $headers),
             );
         } else {
-            $payload = $this->provider->authenticate($token, $headers);
+            $payload = $this->authProvider->authenticate($token, $headers);
         }
 
         $context = [
@@ -144,7 +144,7 @@ class AuthBridgeGuard implements Guard
             ->sort()
             ->implode(';');
 
-        $prefix = $this->provider->getCacheKeyPrefix();
+        $prefix = $this->authProvider->getCacheKeyPrefix();
 
         return "auth-bridge:{$prefix}:".sha1($token.'|'.$headerString);
     }
